@@ -1,13 +1,19 @@
 import { Book } from '../models/book'
 import { getAuthorById } from './author'
+import { AppError } from '../middleware/errorHandler'
 
 let books: Book[] = []
 let currentId = 1
 
-export const addBook = (title: string, authorId: number, publishedYear: number): Book | null => {
+export const addBook = (title: string, authorId: number, publishedYear: number): Book => {
     const author = getAuthorById(authorId)
     if (!author) {
-        return null
+        throw new AppError('Author not found', 404)
+    }
+
+    const existingBook = books.find((book) => book.title === title && book.authorId === authorId)
+    if (existingBook) {
+        throw new AppError('Book with this title already exists for this author', 409)
     }
 
     const newBook = { id: currentId++, title, authorId, publishedYear }
@@ -27,15 +33,20 @@ export const getBookById = (id: number): Book | undefined => {
     return book
 }
 
-export const updateBook = (id: number, title: string, authorId: number, publishedYear: number): Book | null => {
+export const updateBook = (id: number, title: string, authorId: number, publishedYear: number): Book => {
     const author = getAuthorById(authorId)
     if (!author) {
-        return null
+        throw new AppError('Author not found', 404)
     }
 
     const book = books.find((book) => book.id === id)
     if (!book) {
-        return null
+        throw new AppError('Book not found', 404)
+    }
+
+    const existingBook = books.find((book) => book.title === title && book.authorId === authorId && book.id !== id)
+    if (existingBook) {
+        throw new AppError('Book with this title already exists for this author', 409)
     }
 
     book.title = title

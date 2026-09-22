@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { body, param, validationResult } from "express-validator"
 import { addBook, getBooks, getBookById, updateBook, deleteBook } from '../controllers/book'
 
@@ -29,21 +29,20 @@ bookRouter.post("/", [
     body("title").isString().withMessage("Title must be a string").notEmpty().withMessage("Title cannot be empty"),
     body("authorId").isInt().withMessage("Author ID must be an integer").toInt(),
     body("publishedYear").isInt().withMessage("Published year must be an integer").toInt()
-], (req: Request, res: Response) => {
+], (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req)
 
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
     }
 
-    const { title, authorId, publishedYear } = req.body
-    const newBook = addBook(title, authorId, publishedYear)
-
-    if (!newBook) {
-        return res.status(404).json({ message: "Author not found" })
+    try {
+        const { title, authorId, publishedYear } = req.body
+        const newBook = addBook(title, authorId, publishedYear)
+        res.status(201).json(newBook)
+    } catch (error) {
+        next(error)
     }
-
-    res.status(201).json(newBook)
 })
 
 bookRouter.put("/:id", [
@@ -51,22 +50,21 @@ bookRouter.put("/:id", [
     body("title").isString().withMessage("Title must be a string").notEmpty().withMessage("Title cannot be empty"),
     body("authorId").isInt().withMessage("Author ID must be an integer").toInt(),
     body("publishedYear").isInt().withMessage("Published year must be an integer").toInt()
-], (req: Request, res: Response) => {
+], (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req)
 
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
     }
 
-    const { id } = req.params
-    const { title, authorId, publishedYear } = req.body
-    const updatedBook = updateBook(parseInt(String(id), 10), title, authorId, publishedYear)
-
-    if (!updatedBook) {
-        return res.status(404).json({ message: "Book or author not found" })
+    try {
+        const { id } = req.params
+        const { title, authorId, publishedYear } = req.body
+        const updatedBook = updateBook(parseInt(String(id), 10), title, authorId, publishedYear)
+        res.status(200).json(updatedBook)
+    } catch (error) {
+        next(error)
     }
-
-    res.status(200).json(updatedBook)
 })
 
 bookRouter.delete("/:id", [param("id").isInt().withMessage("Id must be an integer")], (req: Request, res: Response) => {
