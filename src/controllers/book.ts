@@ -63,3 +63,12 @@ export const deleteBook = (id: number): boolean => {
     books.splice(bookIndex, 1)
     return true
 }
+
+export const getBooksByAuthor = (authorId: number): Book[] => {
+    const author = getAuthorById(authorId)
+    if (!author) {
+        throw new AppError('Author not found', 404)
+    }
+
+    return books.filter((book) => book.authorId === authorId)
+}

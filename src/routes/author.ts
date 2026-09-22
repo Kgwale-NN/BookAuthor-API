@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { body, param, validationResult } from "express-validator"
 import { addAuthor, getAuthors, getAuthorById, updateAuthor, deleteAuthor } from '../controllers/author'
+import { getBooksByAuthor } from '../controllers/book'
 
 const routor = Router()
 
@@ -30,6 +31,24 @@ routor.get("/:id", [param("id").isInt().withMessage("Id must be an interger")], 
     }
 
     res.status(200).json(author)
+})
+
+routor.get("/:id/books", [param("id").isInt().withMessage("Id must be an interger")], (req: Request, res: Response, next: NextFunction) => {
+
+    const errors = validationResult(req)
+
+    if (!errors.isEmpty()) {
+
+        return res.status(400).json({ errors: errors.array() })
+    }
+
+    try {
+        const { id } = req.params
+        const books = getBooksByAuthor(parseInt(String(id), 10))
+        res.status(200).json(books)
+    } catch (error) {
+        next(error)
+    }
 })
 
 routor.post("/", [body("name").isString().withMessage("Name must be a string"), body("email").isEmail().withMessage("Email must be a valid email address")], (req: Request, res: Response, next: NextFunction) => {
